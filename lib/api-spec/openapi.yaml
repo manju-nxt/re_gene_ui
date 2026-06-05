@@ -1,22 +1,29 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: GreenH2 Nxt Revenue Intelligence API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: plants
+    description: Solar plant / asset operations
+  - name: forecasts
+    description: Solar generation forecast operations
+  - name: schedules
+    description: Schedule management and SLDC submission
+  - name: dashboard
+    description: Dashboard summary and portfolio views
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +31,619 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Plants ────────────────────────────────────────────────────────────────
+  /plants:
+    get:
+      operationId: listPlants
+      tags: [plants]
+      summary: List all solar plants
+      responses:
+        "200":
+          description: List of plants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Plant"
+
+  /plants/{plantId}:
+    get:
+      operationId: getPlant
+      tags: [plants]
+      summary: Get plant details
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Plant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plant"
+        "404":
+          description: Not found
+
+  # ── Forecasts ─────────────────────────────────────────────────────────────
+  /forecasts:
+    get:
+      operationId: listForecasts
+      tags: [forecasts]
+      summary: List forecast runs with optional filters
+      parameters:
+        - name: plantId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: type
+          in: query
+          schema:
+            type: ["string", "null"]
+            enum: [day_ahead, intra_day, null]
+        - name: date
+          in: query
+          description: Target date YYYY-MM-DD
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: Forecast list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ForecastRun"
+
+  /forecasts/{forecastId}:
+    get:
+      operationId: getForecast
+      tags: [forecasts]
+      summary: Get a forecast run with its time slots
+      parameters:
+        - name: forecastId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Forecast with slots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastDetail"
+        "404":
+          description: Not found
+
+  /forecasts/day-ahead:
+    get:
+      operationId: getDayAheadForecast
+      tags: [forecasts]
+      summary: Latest day-ahead forecast for a plant on a given date
+      parameters:
+        - name: plantId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: query
+          description: Target date YYYY-MM-DD (defaults to tomorrow)
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: Day-ahead forecast detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastDetail"
+        "404":
+          description: No forecast available
+
+  /forecasts/intra-day:
+    get:
+      operationId: getIntraDayForecast
+      tags: [forecasts]
+      summary: Latest intra-day forecast for a plant on a given date
+      parameters:
+        - name: plantId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: query
+          description: Target date YYYY-MM-DD (defaults to today)
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: Intra-day forecast detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastDetail"
+        "404":
+          description: No forecast available
+
+  # ── Schedules ─────────────────────────────────────────────────────────────
+  /schedules:
+    get:
+      operationId: listSchedules
+      tags: [schedules]
+      summary: List schedules with optional filters
+      parameters:
+        - name: plantId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: date
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: status
+          in: query
+          schema:
+            type: ["string", "null"]
+            enum: [draft, submitted, revised, null]
+      responses:
+        "200":
+          description: Schedule list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Schedule"
+
+    post:
+      operationId: createSchedule
+      tags: [schedules]
+      summary: Create a schedule (optionally from a forecast)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schedule"
+
+  /schedules/{scheduleId}:
+    get:
+      operationId: getSchedule
+      tags: [schedules]
+      summary: Get schedule with slots and adjustment details
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Schedule detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleDetail"
+        "404":
+          description: Not found
+
+    patch:
+      operationId: updateSchedule
+      tags: [schedules]
+      summary: Update schedule slots (apply user adjustments)
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleUpdate"
+      responses:
+        "200":
+          description: Updated schedule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleDetail"
+        "400":
+          description: Validation error
+        "404":
+          description: Not found
+
+  /schedules/{scheduleId}/submit:
+    post:
+      operationId: submitSchedule
+      tags: [schedules]
+      summary: Submit schedule to SLDC
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submission acknowledgement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionResult"
+        "400":
+          description: Schedule not ready
+        "404":
+          description: Not found
+
+  /schedules/{scheduleId}/submissions:
+    get:
+      operationId: listSubmissions
+      tags: [schedules]
+      summary: Submission history for a schedule
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submission log list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubmissionLog"
+
+  # ── Dashboard / Portfolio ─────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Portfolio-level KPIs and alert counts
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/portfolio:
+    get:
+      operationId: getPortfolioOverview
+      tags: [dashboard]
+      summary: Per-plant status snapshot for today
+      responses:
+        "200":
+          description: Portfolio plant list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlantStatus"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    # ── Plant ────────────────────────────────────────────────────────────────
+    Plant:
+      type: object
+      required: [id, name, state, sldc, capacityMw, type]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        state:
+          type: string
+          description: Indian state e.g. Rajasthan
+        sldc:
+          type: string
+          description: SLDC name e.g. RSLDC
+        capacityMw:
+          type: number
+          description: Installed capacity in MW
+        type:
+          type: string
+          enum: [solar, wind, hybrid]
+        location:
+          type: ["string", "null"]
+        commissioning_date:
+          type: ["string", "null"]
+
+    # ── Forecast ─────────────────────────────────────────────────────────────
+    ForecastSlot:
+      type: object
+      required: [id, slotNumber, slotStart, slotEnd, forecastMw, lowerBoundMw, upperBoundMw]
+      properties:
+        id:
+          type: integer
+        slotNumber:
+          type: integer
+          description: 1-96 (15-min blocks per day)
+        slotStart:
+          type: string
+          description: ISO datetime
+        slotEnd:
+          type: string
+          description: ISO datetime
+        forecastMw:
+          type: number
+          description: AI model forecast generation in MW
+        lowerBoundMw:
+          type: number
+          description: Lower confidence bound
+        upperBoundMw:
+          type: number
+          description: Upper confidence bound
+        irradianceForecast:
+          type: ["number", "null"]
+          description: GHI W/m²
+
+    ForecastRun:
+      type: object
+      required: [id, plantId, plantName, type, targetDate, runAt, totalForecastMwh, status]
+      properties:
+        id:
+          type: integer
+        plantId:
+          type: integer
+        plantName:
+          type: string
+        type:
+          type: string
+          enum: [day_ahead, intra_day]
+        targetDate:
+          type: string
+          description: YYYY-MM-DD
+        runAt:
+          type: string
+          description: ISO datetime when model ran
+        totalForecastMwh:
+          type: number
+        status:
+          type: string
+          enum: [available, superseded]
+        revisionNumber:
+          type: ["integer", "null"]
+          description: Intra-day revision number (1-N)
+
+    ForecastDetail:
+      type: object
+      required: [forecast, slots]
+      properties:
+        forecast:
+          $ref: "#/components/schemas/ForecastRun"
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/ForecastSlot"
+
+    # ── Schedule ─────────────────────────────────────────────────────────────
+    ScheduleSlot:
+      type: object
+      required: [id, slotNumber, slotStart, slotEnd, forecastMw, scheduledMw, adjustmentMw, adjustmentPct, maxAllowedMw, minAllowedMw]
+      properties:
+        id:
+          type: integer
+        slotNumber:
+          type: integer
+        slotStart:
+          type: string
+        slotEnd:
+          type: string
+        forecastMw:
+          type: number
+        scheduledMw:
+          type: number
+          description: Final value to be submitted
+        adjustmentMw:
+          type: number
+          description: User-applied delta
+        adjustmentPct:
+          type: number
+          description: Regulatory cap on adjustment (%)
+        maxAllowedMw:
+          type: number
+        minAllowedMw:
+          type: number
+
+    Schedule:
+      type: object
+      required: [id, plantId, plantName, date, type, status, totalScheduledMwh, totalForecastMwh, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        plantId:
+          type: integer
+        plantName:
+          type: string
+        forecastId:
+          type: ["integer", "null"]
+        date:
+          type: string
+          description: YYYY-MM-DD schedule date
+        type:
+          type: string
+          enum: [day_ahead, intra_day]
+        status:
+          type: string
+          enum: [draft, submitted, revised]
+        revisionNumber:
+          type: integer
+        totalScheduledMwh:
+          type: number
+        totalForecastMwh:
+          type: number
+        deadlineAt:
+          type: ["string", "null"]
+          description: SLDC submission deadline ISO datetime
+        lastSubmittedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    ScheduleDetail:
+      type: object
+      required: [schedule, slots]
+      properties:
+        schedule:
+          $ref: "#/components/schemas/Schedule"
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleSlot"
+
+    ScheduleSlotUpdate:
+      type: object
+      required: [slotNumber, scheduledMw]
+      properties:
+        slotNumber:
+          type: integer
+        scheduledMw:
+          type: number
+
+    ScheduleInput:
+      type: object
+      required: [plantId, date, type]
+      properties:
+        plantId:
+          type: integer
+        date:
+          type: string
+        type:
+          type: string
+          enum: [day_ahead, intra_day]
+        forecastId:
+          type: ["integer", "null"]
+        notes:
+          type: ["string", "null"]
+
+    ScheduleUpdate:
+      type: object
+      required: [slots]
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleSlotUpdate"
+        notes:
+          type: ["string", "null"]
+
+    SubmissionResult:
+      type: object
+      required: [success, message, submittedAt, acknowledgementId]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        submittedAt:
+          type: string
+        acknowledgementId:
+          type: string
+        scheduleId:
+          type: integer
+
+    SubmissionLog:
+      type: object
+      required: [id, scheduleId, submittedAt, status, revisionNumber]
+      properties:
+        id:
+          type: integer
+        scheduleId:
+          type: integer
+        submittedAt:
+          type: string
+        status:
+          type: string
+          enum: [success, failed, pending]
+        revisionNumber:
+          type: integer
+        acknowledgementId:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+
+    # ── Dashboard ─────────────────────────────────────────────────────────────
+    DashboardSummary:
+      type: object
+      required: [totalPlants, totalCapacityMw, todayForecastMwh, pendingSchedules, submittedSchedules, alertCount, dayAheadSubmissionDeadline, forecastAccuracyPct]
+      properties:
+        totalPlants:
+          type: integer
+        totalCapacityMw:
+          type: number
+        todayForecastMwh:
+          type: number
+          description: Sum of today's intra-day forecast across portfolio
+        pendingSchedules:
+          type: integer
+          description: Schedules in draft not yet submitted
+        submittedSchedules:
+          type: integer
+          description: Submitted schedules today
+        alertCount:
+          type: integer
+          description: Active alerts (large deviations, missed deadlines)
+        dayAheadSubmissionDeadline:
+          type: string
+          description: ISO datetime of next D+1 submission deadline
+        forecastAccuracyPct:
+          type: number
+          description: Rolling 7-day average MAPE vs actual (%)
+
+    PlantStatus:
+      type: object
+      required: [plantId, plantName, capacityMw, state, sldc, todayForecastMwh, scheduleStatus, lastSubmittedAt, revisionNumber, forecastAccuracyPct]
+      properties:
+        plantId:
+          type: integer
+        plantName:
+          type: string
+        capacityMw:
+          type: number
+        state:
+          type: string
+        sldc:
+          type: string
+        todayForecastMwh:
+          type: number
+        scheduleStatus:
+          type: string
+          enum: [draft, submitted, revised, not_started]
+        lastSubmittedAt:
+          type: ["string", "null"]
+        revisionNumber:
+          type: integer
+        forecastAccuracyPct:
+          type: number
