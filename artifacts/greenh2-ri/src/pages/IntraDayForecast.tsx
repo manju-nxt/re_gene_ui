@@ -156,7 +156,7 @@ export default function IntraDayForecast() {
                     />
                     
                     {/* Current Time Reference */}
-                    <ReferenceLine x={currentTime} stroke="hsl(var(--destructive))" strokeDasharray="3 3" />
+                    <ReferenceLine x={currentTime} yAxisId="left" stroke="hsl(var(--destructive))" strokeDasharray="3 3" />
                     
                     <Line 
                       yAxisId="left"
