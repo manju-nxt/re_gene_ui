@@ -11,6 +11,7 @@ import IntraDayForecast from "@/pages/IntraDayForecast";
 import Schedules from "@/pages/Schedules";
 import CreateSchedule from "@/pages/CreateSchedule";
 import ScheduleDetail from "@/pages/ScheduleDetail";
+import AdminUpload from "@/pages/AdminUpload";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ function Router() {
         <Route path="/schedules" component={Schedules} />
         <Route path="/schedules/new" component={CreateSchedule} />
         <Route path="/schedules/:id" component={ScheduleDetail} />
+        <Route path="/admin/upload" component={AdminUpload} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>
@@ -45,9 +47,8 @@ function Router() {
 }
 
 function App() {
-  // Ensure dark mode class is on html
-  if (typeof document !== 'undefined') {
-    document.documentElement.classList.add('dark');
+  if (typeof document !== "undefined") {
+    document.documentElement.classList.add("dark");
   }
 
   return (

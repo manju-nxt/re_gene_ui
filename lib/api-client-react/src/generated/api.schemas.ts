@@ -53,6 +53,21 @@ export interface ForecastSlot {
      * @nullable
      */
   irradianceForecast?: number | null;
+  /**
+     * Ambient air temperature °C
+     * @nullable
+     */
+  temperature?: number | null;
+  /**
+     * PV module surface temperature °C
+     * @nullable
+     */
+  moduleTemperature?: number | null;
+  /**
+     * Relative humidity %
+     * @nullable
+     */
+  humidity?: number | null;
 }
 
 export type ForecastRunType = typeof ForecastRunType[keyof typeof ForecastRunType];
@@ -255,6 +270,78 @@ export interface PlantStatus {
   forecastAccuracyPct: number;
 }
 
+export type WeatherInputUploadType = typeof WeatherInputUploadType[keyof typeof WeatherInputUploadType];
+
+
+export const WeatherInputUploadType = {
+  day_ahead: 'day_ahead',
+  intra_day: 'intra_day',
+} as const;
+
+export type WeatherInputUploadStatus = typeof WeatherInputUploadStatus[keyof typeof WeatherInputUploadStatus];
+
+
+export const WeatherInputUploadStatus = {
+  processed: 'processed',
+  failed: 'failed',
+} as const;
+
+export interface WeatherInputUpload {
+  id: number;
+  plantId: number;
+  date: string;
+  type: WeatherInputUploadType;
+  filename: string;
+  rowCount: number;
+  status: WeatherInputUploadStatus;
+  uploadedAt: string;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export interface WeatherInputRow {
+  slotNumber: number;
+  /** HH:mm */
+  time: string;
+  /**
+     * Global Horizontal Irradiance W/m²
+     * @nullable
+     */
+  irradianceGhi?: number | null;
+  /**
+     * Ambient temperature °C
+     * @nullable
+     */
+  temperature?: number | null;
+  /**
+     * Module surface temperature °C
+     * @nullable
+     */
+  moduleTemperature?: number | null;
+  /**
+     * Relative humidity %
+     * @nullable
+     */
+  humidity?: number | null;
+}
+
+export type WeatherInputUploadRequestType = typeof WeatherInputUploadRequestType[keyof typeof WeatherInputUploadRequestType];
+
+
+export const WeatherInputUploadRequestType = {
+  day_ahead: 'day_ahead',
+  intra_day: 'intra_day',
+} as const;
+
+export interface WeatherInputUploadRequest {
+  plantId: number;
+  /** YYYY-MM-DD */
+  date: string;
+  type: WeatherInputUploadRequestType;
+  filename: string;
+  rows: WeatherInputRow[];
+}
+
 export type ListForecastsParams = {
 /**
  * @nullable
@@ -320,4 +407,15 @@ export const ListSchedulesStatus = {
   submitted: 'submitted',
   revised: 'revised',
 } as const;
+
+export type ListWeatherInputUploadsParams = {
+/**
+ * @nullable
+ */
+plantId?: number | null;
+/**
+ * @nullable
+ */
+date?: string | null;
+};
 

@@ -4,6 +4,7 @@ import plantsRouter from "./plants";
 import forecastsRouter from "./forecasts";
 import schedulesRouter from "./schedules";
 import dashboardRouter from "./dashboard";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(plantsRouter);
 router.use(forecastsRouter);
 router.use(schedulesRouter);
 router.use(dashboardRouter);
+router.use(adminRouter);
 
 export default router;

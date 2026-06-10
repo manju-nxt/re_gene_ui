@@ -25,4 +25,19 @@ export interface ForecastSlot {
      * @nullable
      */
   irradianceForecast?: number | null;
+  /**
+     * Ambient air temperature °C
+     * @nullable
+     */
+  temperature?: number | null;
+  /**
+     * PV module surface temperature °C
+     * @nullable
+     */
+  moduleTemperature?: number | null;
+  /**
+     * Relative humidity %
+     * @nullable
+     */
+  humidity?: number | null;
 }

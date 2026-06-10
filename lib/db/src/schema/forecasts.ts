@@ -25,6 +25,10 @@ export const forecastSlotsTable = pgTable("forecast_slots", {
   lowerBoundMw: real("lower_bound_mw").notNull(),
   upperBoundMw: real("upper_bound_mw").notNull(),
   irradianceForecast: real("irradiance_forecast"),
+  // Model input parameters (populated from uploaded weather data or API lookups)
+  temperature: real("temperature"),        // Ambient temperature °C
+  moduleTemperature: real("module_temperature"), // Module surface temperature °C
+  humidity: real("humidity"),              // Relative humidity %
 });
 
 export const insertForecastRunSchema = createInsertSchema(forecastRunsTable).omit({ id: true, createdAt: true });

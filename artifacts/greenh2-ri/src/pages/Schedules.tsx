@@ -108,7 +108,7 @@ export default function Schedules() {
       </div>
 
       <Card className="border-border bg-card overflow-hidden">
-        <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as any)} className="w-full">
+        <Tabs value={statusTab ?? "all"} onValueChange={(v) => setStatusTab(v as any)} className="w-full">
           <div className="border-b border-border bg-muted/10 px-4 pt-4 flex justify-between items-center">
             <TabsList className="bg-transparent border-b-0 space-x-2">
               <TabsTrigger value="all" className="font-mono uppercase text-xs tracking-wider data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none">All</TabsTrigger>

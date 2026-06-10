@@ -6,7 +6,8 @@ import {
   useUpdateSchedule, 
   useSubmitSchedule, 
   useListSubmissions,
-  getGetScheduleQueryKey
+  getGetScheduleQueryKey,
+  getListSubmissionsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +32,7 @@ export default function ScheduleDetail() {
   });
   
   const { data: submissions } = useListSubmissions(scheduleId, {
-    query: { enabled: !!scheduleId }
+    query: { enabled: !!scheduleId, queryKey: getListSubmissionsQueryKey(scheduleId) }
   });
 
   const updateMutation = useUpdateSchedule();
@@ -216,7 +217,7 @@ export default function ScheduleDetail() {
         </Card>
       </div>
 
-      <Tabs defaultValue="chart" className="w-full">
+      <Tabs defaultValue="table" className="w-full">
         <div className="flex justify-between items-center mb-4">
           <TabsList className="bg-muted/20 border border-border">
             <TabsTrigger value="chart" className="font-mono uppercase text-xs tracking-wider">Visual Profile</TabsTrigger>

@@ -28,6 +28,7 @@ import type {
   HealthStatus,
   ListForecastsParams,
   ListSchedulesParams,
+  ListWeatherInputUploadsParams,
   Plant,
   PlantStatus,
   Schedule,
@@ -35,7 +36,9 @@ import type {
   ScheduleInput,
   ScheduleUpdate,
   SubmissionLog,
-  SubmissionResult
+  SubmissionResult,
+  WeatherInputUpload,
+  WeatherInputUploadRequest
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1214,4 +1217,159 @@ export function useGetPortfolioOverview<TData = Awaited<ReturnType<typeof getPor
 
 
 
+
+export const getListWeatherInputUploadsUrl = (params?: ListWeatherInputUploadsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/weather-inputs?${stringifiedParams}` : `/api/admin/weather-inputs`
+}
+
+/**
+ * @summary List weather input uploads with optional filters
+ */
+export const listWeatherInputUploads = async (params?: ListWeatherInputUploadsParams, options?: RequestInit): Promise<WeatherInputUpload[]> => {
+
+  return customFetch<WeatherInputUpload[]>(getListWeatherInputUploadsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListWeatherInputUploadsQueryKey = (params?: ListWeatherInputUploadsParams,) => {
+    return [
+    `/api/admin/weather-inputs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListWeatherInputUploadsQueryOptions = <TData = Awaited<ReturnType<typeof listWeatherInputUploads>>, TError = ErrorType<unknown>>(params?: ListWeatherInputUploadsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listWeatherInputUploads>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListWeatherInputUploadsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listWeatherInputUploads>>> = ({ signal }) => listWeatherInputUploads(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listWeatherInputUploads>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListWeatherInputUploadsQueryResult = NonNullable<Awaited<ReturnType<typeof listWeatherInputUploads>>>
+export type ListWeatherInputUploadsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List weather input uploads with optional filters
+ */
+
+export function useListWeatherInputUploads<TData = Awaited<ReturnType<typeof listWeatherInputUploads>>, TError = ErrorType<unknown>>(
+ params?: ListWeatherInputUploadsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listWeatherInputUploads>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListWeatherInputUploadsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUploadWeatherInputsUrl = () => {
+
+
+
+
+  return `/api/admin/weather-inputs/upload`
+}
+
+/**
+ * @summary Upload CSV or Excel file with per-slot weather inputs for a plant and date
+ */
+export const uploadWeatherInputs = async (weatherInputUploadRequest: WeatherInputUploadRequest, options?: RequestInit): Promise<WeatherInputUpload> => {
+
+  return customFetch<WeatherInputUpload>(getUploadWeatherInputsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      weatherInputUploadRequest,)
+  }
+);}
+
+
+
+
+export const getUploadWeatherInputsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadWeatherInputs>>, TError,{data: BodyType<WeatherInputUploadRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadWeatherInputs>>, TError,{data: BodyType<WeatherInputUploadRequest>}, TContext> => {
+
+const mutationKey = ['uploadWeatherInputs'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadWeatherInputs>>, {data: BodyType<WeatherInputUploadRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadWeatherInputs(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadWeatherInputsMutationResult = NonNullable<Awaited<ReturnType<typeof uploadWeatherInputs>>>
+    export type UploadWeatherInputsMutationBody = BodyType<WeatherInputUploadRequest>
+    export type UploadWeatherInputsMutationError = ErrorType<void>
+
+    /**
+ * @summary Upload CSV or Excel file with per-slot weather inputs for a plant and date
+ */
+export const useUploadWeatherInputs = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadWeatherInputs>>, TError,{data: BodyType<WeatherInputUploadRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadWeatherInputs>>,
+        TError,
+        {data: BodyType<WeatherInputUploadRequest>},
+        TContext
+      > => {
+      return useMutation(getUploadWeatherInputsMutationOptions(options));
+    }
 

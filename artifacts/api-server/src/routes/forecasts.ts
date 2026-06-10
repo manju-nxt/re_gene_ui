@@ -35,6 +35,9 @@ function formatSlot(slot: typeof forecastSlotsTable.$inferSelect) {
     lowerBoundMw: slot.lowerBoundMw,
     upperBoundMw: slot.upperBoundMw,
     irradianceForecast: slot.irradianceForecast ?? null,
+    temperature: slot.temperature ?? null,
+    moduleTemperature: slot.moduleTemperature ?? null,
+    humidity: slot.humidity ?? null,
   };
 }
 

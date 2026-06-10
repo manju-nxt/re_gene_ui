@@ -101,7 +101,10 @@ export const GetForecastResponse = zod.object({
   "forecastMw": zod.number().describe('AI model forecast generation in MW'),
   "lowerBoundMw": zod.number().describe('Lower confidence bound'),
   "upperBoundMw": zod.number().describe('Upper confidence bound'),
-  "irradianceForecast": zod.number().nullish().describe('GHI W\/m²')
+  "irradianceForecast": zod.number().nullish().describe('GHI W\/m²'),
+  "temperature": zod.number().nullish().describe('Ambient air temperature °C'),
+  "moduleTemperature": zod.number().nullish().describe('PV module surface temperature °C'),
+  "humidity": zod.number().nullish().describe('Relative humidity %')
 }))
 })
 
@@ -134,7 +137,10 @@ export const GetDayAheadForecastResponse = zod.object({
   "forecastMw": zod.number().describe('AI model forecast generation in MW'),
   "lowerBoundMw": zod.number().describe('Lower confidence bound'),
   "upperBoundMw": zod.number().describe('Upper confidence bound'),
-  "irradianceForecast": zod.number().nullish().describe('GHI W\/m²')
+  "irradianceForecast": zod.number().nullish().describe('GHI W\/m²'),
+  "temperature": zod.number().nullish().describe('Ambient air temperature °C'),
+  "moduleTemperature": zod.number().nullish().describe('PV module surface temperature °C'),
+  "humidity": zod.number().nullish().describe('Relative humidity %')
 }))
 })
 
@@ -167,7 +173,10 @@ export const GetIntraDayForecastResponse = zod.object({
   "forecastMw": zod.number().describe('AI model forecast generation in MW'),
   "lowerBoundMw": zod.number().describe('Lower confidence bound'),
   "upperBoundMw": zod.number().describe('Upper confidence bound'),
-  "irradianceForecast": zod.number().nullish().describe('GHI W\/m²')
+  "irradianceForecast": zod.number().nullish().describe('GHI W\/m²'),
+  "temperature": zod.number().nullish().describe('Ambient air temperature °C'),
+  "moduleTemperature": zod.number().nullish().describe('PV module surface temperature °C'),
+  "humidity": zod.number().nullish().describe('Relative humidity %')
 }))
 })
 
@@ -364,5 +373,58 @@ export const GetPortfolioOverviewResponseItem = zod.object({
   "forecastAccuracyPct": zod.number()
 })
 export const GetPortfolioOverviewResponse = zod.array(GetPortfolioOverviewResponseItem)
+
+
+/**
+ * @summary List weather input uploads with optional filters
+ */
+export const ListWeatherInputUploadsQueryParams = zod.object({
+  "plantId": zod.coerce.number().nullish(),
+  "date": zod.coerce.string().nullish()
+})
+
+export const ListWeatherInputUploadsResponseItem = zod.object({
+  "id": zod.number(),
+  "plantId": zod.number(),
+  "date": zod.string(),
+  "type": zod.enum(['day_ahead', 'intra_day']),
+  "filename": zod.string(),
+  "rowCount": zod.number(),
+  "status": zod.enum(['processed', 'failed']),
+  "uploadedAt": zod.string(),
+  "notes": zod.string().nullish()
+})
+export const ListWeatherInputUploadsResponse = zod.array(ListWeatherInputUploadsResponseItem)
+
+
+/**
+ * @summary Upload CSV or Excel file with per-slot weather inputs for a plant and date
+ */
+export const UploadWeatherInputsBody = zod.object({
+  "plantId": zod.number(),
+  "date": zod.string().describe('YYYY-MM-DD'),
+  "type": zod.enum(['day_ahead', 'intra_day']),
+  "filename": zod.string(),
+  "rows": zod.array(zod.object({
+  "slotNumber": zod.number(),
+  "time": zod.string().describe('HH:mm'),
+  "irradianceGhi": zod.number().nullish().describe('Global Horizontal Irradiance W\/m²'),
+  "temperature": zod.number().nullish().describe('Ambient temperature °C'),
+  "moduleTemperature": zod.number().nullish().describe('Module surface temperature °C'),
+  "humidity": zod.number().nullish().describe('Relative humidity %')
+}))
+})
+
+export const UploadWeatherInputsResponse = zod.object({
+  "id": zod.number(),
+  "plantId": zod.number(),
+  "date": zod.string(),
+  "type": zod.enum(['day_ahead', 'intra_day']),
+  "filename": zod.string(),
+  "rowCount": zod.number(),
+  "status": zod.enum(['processed', 'failed']),
+  "uploadedAt": zod.string(),
+  "notes": zod.string().nullish()
+})
 
 

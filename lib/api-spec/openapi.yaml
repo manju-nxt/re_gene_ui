@@ -343,6 +343,52 @@ paths:
                 items:
                   $ref: "#/components/schemas/PlantStatus"
 
+  # ── Admin ─────────────────────────────────────────────────────────────────
+  /admin/weather-inputs:
+    get:
+      operationId: listWeatherInputUploads
+      tags: [admin]
+      summary: List weather input uploads with optional filters
+      parameters:
+        - name: plantId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: date
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: Upload history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WeatherInputUpload"
+
+  /admin/weather-inputs/upload:
+    post:
+      operationId: uploadWeatherInputs
+      tags: [admin]
+      summary: Upload CSV or Excel file with per-slot weather inputs for a plant and date
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeatherInputUploadRequest"
+      responses:
+        "200":
+          description: Upload result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherInputUpload"
+        "400":
+          description: Parse or validation error
+
 components:
   schemas:
     HealthStatus:
@@ -406,6 +452,15 @@ components:
         irradianceForecast:
           type: ["number", "null"]
           description: GHI W/m²
+        temperature:
+          type: ["number", "null"]
+          description: Ambient air temperature °C
+        moduleTemperature:
+          type: ["number", "null"]
+          description: PV module surface temperature °C
+        humidity:
+          type: ["number", "null"]
+          description: Relative humidity %
 
     ForecastRun:
       type: object
@@ -647,3 +702,70 @@ components:
           type: integer
         forecastAccuracyPct:
           type: number
+
+    # ── Admin ─────────────────────────────────────────────────────────────────
+    WeatherInputUpload:
+      type: object
+      required: [id, plantId, date, type, filename, rowCount, status, uploadedAt]
+      properties:
+        id:
+          type: integer
+        plantId:
+          type: integer
+        date:
+          type: string
+        type:
+          type: string
+          enum: [day_ahead, intra_day]
+        filename:
+          type: string
+        rowCount:
+          type: integer
+        status:
+          type: string
+          enum: [processed, failed]
+        uploadedAt:
+          type: string
+        notes:
+          type: ["string", "null"]
+
+    WeatherInputRow:
+      type: object
+      required: [slotNumber, time]
+      properties:
+        slotNumber:
+          type: integer
+        time:
+          type: string
+          description: HH:mm
+        irradianceGhi:
+          type: ["number", "null"]
+          description: Global Horizontal Irradiance W/m²
+        temperature:
+          type: ["number", "null"]
+          description: Ambient temperature °C
+        moduleTemperature:
+          type: ["number", "null"]
+          description: Module surface temperature °C
+        humidity:
+          type: ["number", "null"]
+          description: Relative humidity %
+
+    WeatherInputUploadRequest:
+      type: object
+      required: [plantId, date, type, filename, rows]
+      properties:
+        plantId:
+          type: integer
+        date:
+          type: string
+          description: YYYY-MM-DD
+        type:
+          type: string
+          enum: [day_ahead, intra_day]
+        filename:
+          type: string
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeatherInputRow"
