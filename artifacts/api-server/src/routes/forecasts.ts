@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { forecastRunsTable, forecastSlotsTable, plantsTable } from "@workspace/db";
+import {
+  forecastRunsTable,
+  forecastSlotsTable,
+  plantsTable,
+  schedulesTable,
+  scheduleSlotsTable,
+} from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import {
   ListForecastsQueryParams,
@@ -25,7 +31,10 @@ function formatRun(run: typeof forecastRunsTable.$inferSelect, plantName: string
   };
 }
 
-function formatSlot(slot: typeof forecastSlotsTable.$inferSelect) {
+function formatSlot(
+  slot: typeof forecastSlotsTable.$inferSelect,
+  scheduledMw: number | null = null,
+) {
   return {
     id: slot.id,
     slotNumber: slot.slotNumber,
@@ -38,7 +47,38 @@ function formatSlot(slot: typeof forecastSlotsTable.$inferSelect) {
     temperature: slot.temperature ?? null,
     moduleTemperature: slot.moduleTemperature ?? null,
     humidity: slot.humidity ?? null,
+    actualMw: slot.actualMw ?? null,
+    scheduledMw,
   };
+}
+
+/** Build slotNumber→scheduledMw map for the latest schedule of a plant+date+type */
+async function getScheduleSlotMap(
+  plantId: number,
+  date: string,
+  type: string,
+): Promise<Record<number, number>> {
+  const [schedule] = await db
+    .select()
+    .from(schedulesTable)
+    .where(
+      and(
+        eq(schedulesTable.plantId, plantId),
+        eq(schedulesTable.date, date),
+        eq(schedulesTable.type, type),
+      ),
+    )
+    .orderBy(desc(schedulesTable.updatedAt))
+    .limit(1);
+
+  if (!schedule) return {};
+
+  const sslots = await db
+    .select()
+    .from(scheduleSlotsTable)
+    .where(eq(scheduleSlotsTable.scheduleId, schedule.id));
+
+  return Object.fromEntries(sslots.map((ss) => [ss.slotNumber, ss.scheduledMw]));
 }
 
 router.get("/forecasts", async (req, res) => {
@@ -104,13 +144,19 @@ router.get("/forecasts/day-ahead", async (req, res) => {
     return;
   }
 
-  const slots = await db
-    .select()
-    .from(forecastSlotsTable)
-    .where(eq(forecastSlotsTable.forecastRunId, run.id))
-    .orderBy(forecastSlotsTable.slotNumber);
+  const [slots, scheduleMap] = await Promise.all([
+    db
+      .select()
+      .from(forecastSlotsTable)
+      .where(eq(forecastSlotsTable.forecastRunId, run.id))
+      .orderBy(forecastSlotsTable.slotNumber),
+    getScheduleSlotMap(plantId, targetDate, "day_ahead"),
+  ]);
 
-  res.json({ forecast: formatRun(run, plant.name), slots: slots.map(formatSlot) });
+  res.json({
+    forecast: formatRun(run, plant.name),
+    slots: slots.map((s) => formatSlot(s, scheduleMap[s.slotNumber] ?? null)),
+  });
 });
 
 router.get("/forecasts/intra-day", async (req, res) => {
@@ -150,13 +196,19 @@ router.get("/forecasts/intra-day", async (req, res) => {
     return;
   }
 
-  const slots = await db
-    .select()
-    .from(forecastSlotsTable)
-    .where(eq(forecastSlotsTable.forecastRunId, run.id))
-    .orderBy(forecastSlotsTable.slotNumber);
+  const [slots, scheduleMap] = await Promise.all([
+    db
+      .select()
+      .from(forecastSlotsTable)
+      .where(eq(forecastSlotsTable.forecastRunId, run.id))
+      .orderBy(forecastSlotsTable.slotNumber),
+    getScheduleSlotMap(plantId, targetDate, "intra_day"),
+  ]);
 
-  res.json({ forecast: formatRun(run, plant.name), slots: slots.map(formatSlot) });
+  res.json({
+    forecast: formatRun(run, plant.name),
+    slots: slots.map((s) => formatSlot(s, scheduleMap[s.slotNumber] ?? null)),
+  });
 });
 
 router.get("/forecasts/:forecastId", async (req, res) => {
@@ -180,7 +232,10 @@ router.get("/forecasts/:forecastId", async (req, res) => {
     .where(eq(forecastSlotsTable.forecastRunId, run.id))
     .orderBy(forecastSlotsTable.slotNumber);
 
-  res.json({ forecast: formatRun(run, plant?.name ?? "Unknown"), slots: slots.map(formatSlot) });
+  res.json({
+    forecast: formatRun(run, plant?.name ?? "Unknown"),
+    slots: slots.map((s) => formatSlot(s)),
+  });
 });
 
 function getToday(): string {

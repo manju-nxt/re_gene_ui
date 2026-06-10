@@ -40,4 +40,14 @@ export interface ForecastSlot {
      * @nullable
      */
   humidity?: number | null;
+  /**
+     * Actual generation recorded after the block elapses (MW)
+     * @nullable
+     */
+  actualMw?: number | null;
+  /**
+     * Operator-adjusted scheduled value for this slot (MW)
+     * @nullable
+     */
+  scheduledMw?: number | null;
 }

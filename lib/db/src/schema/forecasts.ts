@@ -29,6 +29,8 @@ export const forecastSlotsTable = pgTable("forecast_slots", {
   temperature: real("temperature"),        // Ambient temperature °C
   moduleTemperature: real("module_temperature"), // Module surface temperature °C
   humidity: real("humidity"),              // Relative humidity %
+  // Post-hoc actuals recorded after the block elapses
+  actualMw: real("actual_mw"),             // Actual generation MW (null until block has passed)
 });
 
 export const insertForecastRunSchema = createInsertSchema(forecastRunsTable).omit({ id: true, createdAt: true });

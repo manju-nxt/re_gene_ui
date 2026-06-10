@@ -461,6 +461,12 @@ components:
         humidity:
           type: ["number", "null"]
           description: Relative humidity %
+        actualMw:
+          type: ["number", "null"]
+          description: Actual generation recorded after the block elapses (MW)
+        scheduledMw:
+          type: ["number", "null"]
+          description: Operator-adjusted scheduled value for this slot (MW)
 
     ForecastRun:
       type: object

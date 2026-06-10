@@ -104,7 +104,9 @@ export const GetForecastResponse = zod.object({
   "irradianceForecast": zod.number().nullish().describe('GHI W\/m²'),
   "temperature": zod.number().nullish().describe('Ambient air temperature °C'),
   "moduleTemperature": zod.number().nullish().describe('PV module surface temperature °C'),
-  "humidity": zod.number().nullish().describe('Relative humidity %')
+  "humidity": zod.number().nullish().describe('Relative humidity %'),
+  "actualMw": zod.number().nullish().describe('Actual generation recorded after the block elapses (MW)'),
+  "scheduledMw": zod.number().nullish().describe('Operator-adjusted scheduled value for this slot (MW)')
 }))
 })
 
@@ -140,7 +142,9 @@ export const GetDayAheadForecastResponse = zod.object({
   "irradianceForecast": zod.number().nullish().describe('GHI W\/m²'),
   "temperature": zod.number().nullish().describe('Ambient air temperature °C'),
   "moduleTemperature": zod.number().nullish().describe('PV module surface temperature °C'),
-  "humidity": zod.number().nullish().describe('Relative humidity %')
+  "humidity": zod.number().nullish().describe('Relative humidity %'),
+  "actualMw": zod.number().nullish().describe('Actual generation recorded after the block elapses (MW)'),
+  "scheduledMw": zod.number().nullish().describe('Operator-adjusted scheduled value for this slot (MW)')
 }))
 })
 
@@ -176,7 +180,9 @@ export const GetIntraDayForecastResponse = zod.object({
   "irradianceForecast": zod.number().nullish().describe('GHI W\/m²'),
   "temperature": zod.number().nullish().describe('Ambient air temperature °C'),
   "moduleTemperature": zod.number().nullish().describe('PV module surface temperature °C'),
-  "humidity": zod.number().nullish().describe('Relative humidity %')
+  "humidity": zod.number().nullish().describe('Relative humidity %'),
+  "actualMw": zod.number().nullish().describe('Actual generation recorded after the block elapses (MW)'),
+  "scheduledMw": zod.number().nullish().describe('Operator-adjusted scheduled value for this slot (MW)')
 }))
 })
 

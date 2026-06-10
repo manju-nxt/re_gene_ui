@@ -135,7 +135,7 @@
 }
 
 /* DARK MODE - Bloomberg Terminal feel */
-.dark, :root {
+.dark {
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
   --opaque-button-border-intensity: 9;
